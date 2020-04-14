@@ -4,23 +4,24 @@ let statusCodes = require('http-status-codes')
 let User = require('../models/userModel')
 
 exports.login = async (req, res, next) => {
-    let user = await User.findOne({username: req.body.username })
-    if(!user) return next({msg: 'invalid username or password.'})
+    let user = await User.findOne({ username: req.body.username })
+    if (!user) return next({ msg: 'invalid username or password.' })
     let isUser = await User.verifyPassword(req.body.password, user.password)
-    if(!isUser) return next({msg: 'invalid username or password.', status: statusCodes.NOT_FOUND})
+    if (!isUser) return next({ msg: 'invalid username or password.', status: statusCodes.NOT_FOUND })
     signToken(statusCodes.OK, user, res)
 }
 
 function signToken(code, user, res) {
     let token = jwt.sign({ user }, process.env.JWT_SECRET)
     res.cookie('auth', token)
-    res.status(code).json({user, token})
+    res.status(code).json({ user, token })
 }
 
 exports.register = async (req, res, next) => {
+    console.log(req.body)
     try {
         let schema = Joi.object().keys({
-            username: Joi.string().min(5).max(10).required(),
+            username: Joi.string().min(5).required(),
             email: Joi.string().email().required(),
             password: Joi.string().min(5).required()
         })
@@ -38,8 +39,38 @@ exports.register = async (req, res, next) => {
         signToken(statusCodes.CREATED, user, res)
 
     } catch (e) { next(e) }
-} 
+}
 
 exports.protect = async (req, res, next) => {
-
-}
+    try {
+        let token
+        if (req.headers.authorization) {
+            token = req.headers.authorization.split(' ')[1]
+        }
+        if (!token) {
+            return res.status(statusCodes.FORBIDDEN).json({
+                msg: 'token not provided.'
+            })
+        }
+       return jwt.verify(token, process.env.JWT_SECRET, async function (err, decoded) {
+        //    console.log(req.headers)
+            if (err) {
+                if (err.expiredAt < new Date()) {
+                    return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({
+                        msg: 'token has expired',
+                        token: null
+                    })
+                }
+                return next({msg: err})
+            } else {
+            let user = await User.findById(decoded.user)
+            // console.log('user', user)
+            req.user = user
+            next()
+            }
+        })
+    }
+    catch (e) {
+        console.log(e)
+    }
+} 

@@ -2,16 +2,20 @@ let express = require('express')
 let mongoose = require('mongoose')
 let morgan = require('morgan')
 let cookieParser = require('cookie-parser')
+let cors = require('cors')
 require('dotenv').config({path: './config.env'})
 let authRoutes = require('./routes/authRoutes')
+let postRoutes = require('./routes/postRoutes')
 
 let app = express()
+app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 app.use('/api/auth', authRoutes)
+app.use('/api/posts', postRoutes)
 
 app.use((err, req, res, next) => {
     console.log(err)
