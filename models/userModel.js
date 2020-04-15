@@ -11,7 +11,22 @@ let userSchema = mongoose.Schema({
     }, 
     password: {
         type: String
-    }
+    },
+    posts: [
+       {
+           post: {
+               type: String, 
+           },
+           postId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'Post'
+           },
+           createdAt: {
+               type: Date,
+               default: Date.now()
+           }
+        }
+    ]
 })
 
 userSchema.pre('save', async function(next) {

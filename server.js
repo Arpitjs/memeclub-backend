@@ -2,6 +2,7 @@ let express = require('express')
 let mongoose = require('mongoose')
 let morgan = require('morgan')
 let cookieParser = require('cookie-parser')
+let io = require('socket.io')
 let cors = require('cors')
 require('dotenv').config({path: './config.env'})
 let authRoutes = require('./routes/authRoutes')
@@ -35,6 +36,9 @@ mongoose.connect(db,
 ).then(() => console.log('db connected!'))
 
 let port = process.env.PORT
-app.listen(port, () => console.log('server listening @ '+ port))
+let server = require('http').createServer(app)
+io = io.listen(server)
+require('./socket/streams')(io) 
+server.listen(port, () => console.log('server listening @ '+ port))
 
 

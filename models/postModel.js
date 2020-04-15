@@ -45,7 +45,7 @@ let postSchema = new mongoose.Schema({
     },
     created: {
         type: Date,
-        default: Date.now()
+        default: new Date()
     }
 })
 
