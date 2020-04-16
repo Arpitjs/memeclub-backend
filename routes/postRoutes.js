@@ -5,6 +5,8 @@ let authController = require('../controllers/authController')
 
 router.post('/add-post',authController.protect, postController.createPost)
 router.post('/add-like', authController.protect, postController.addLike)
-router.get('/posts', postController.getPosts)
+router.post('/add-comment/:postId', authController.protect, postController.addComment)
+router.get('/get-posts', authController.protect, postController.getPosts)
+router.get('/get-post/:postId', authController.protect, postController.getOnePost)
 
 module.exports = router

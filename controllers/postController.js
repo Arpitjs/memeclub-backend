@@ -1,6 +1,6 @@
 let Post = require('../models/postModel')
-let catchAsync = require('../utils/catchAsync')
 let joi = require('@hapi/joi')
+let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
 
 exports.createPost = catchAsync(async (req, res, next) => {
@@ -38,9 +38,9 @@ exports.getPosts = async (req, res) => {
     res.status(200).json(all)
 }
 
-exports.addLike = catchAsync(async(req, res, next) => {
+exports.addLike = catchAsync(async (req, res, next) => {
     let postId = req.body._id
-    await Post.updateOne({ _id: postId }, {
+    await Post.updateOne({ _id: postId, 'likes.username': { $ne: req.user.username } }, {
         $push: {
             likes: {
                 username: req.user.username
@@ -48,5 +48,27 @@ exports.addLike = catchAsync(async(req, res, next) => {
         },
         $inc: { totalLikes: 1 }
     })
-    res.status(200).json({message: 'the post is liked'})
+    res.status(200).json({ message: 'the post is liked' })
 })
+
+exports.addComment = catchAsync(async (req, res, next) => {
+    console.log(req.body)
+    await Post.updateOne({ _id: req.params.postId }, {
+        $push: {
+            comments: {
+                userId: req.user._id,
+                username: req.user.username,
+                comment: req.body.comment
+            }
+        }
+    })
+    res.status(200).json({ message: 'comment added.' })
+})
+
+exports.getOnePost = catchAsync(async (req, res, next) => {
+    let postId = req.params.postId
+    let post = await Post.findOne({ _id: postId })
+        .populate('user').populate('comments.userId')
+    res.status(200).json(post)
+})
+
