@@ -68,7 +68,6 @@ exports.addComment = catchAsync(async (req, res, next) => {
 exports.getOnePost = catchAsync(async (req, res, next) => {
     let postId = req.params.postId
     let post = await Post.findOne({ _id: postId })
-        .populate('user').populate('comments.userId')
     res.status(200).json(post)
 })
 
