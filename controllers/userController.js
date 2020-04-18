@@ -26,7 +26,26 @@ exports.follow = catchAsync(async(req, res, next) => {
             })
             res.status(200).json({ msg: 'you have followed the user'})
     })
-   
+})
+
+exports.Unfollow = catchAsync(async(req, res, next) => {
+    console.log(req.body)
+    User.findByIdAndUpdate({_id: req.user._id}, {
+        $pull: {
+            following: {
+                userFollowed: req.body.userFollowed._id
+            }
+        }
+    }).then(async () => {
+        await User.findByIdAndUpdate({_id: req.body.userFollowed._id }, {
+                $pull: {
+                    followers: {
+                        follower: req.user._id
+                    }
+                }
+            })
+            res.status(200).json({ msg: 'you have unfollowed the user'})
+    })
 })
 
 exports.getUserByName = catchAsync(async(req, res, next) => {
@@ -35,6 +54,6 @@ exports.getUserByName = catchAsync(async(req, res, next) => {
 })
 
 exports.getUser = catchAsync(async(req, res, next) => {
-    let users = await User.findOne({_id: req.params.id})
+    let users = await User.findOne({_id: req.params.id}).populate('following.userFollowed').populate('followers.follower')
     res.status(200).json(users)
 })
