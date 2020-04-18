@@ -23,8 +23,18 @@ let userSchema = mongoose.Schema({
            },
            createdAt: {
                type: Date,
-               default: Date.now()
+               default: new Date()
            }
+        }
+    ],
+    following: [
+        {
+            userFollowed: mongoose.Schema.Types.ObjectId
+        }
+    ],
+    followers: [
+        {
+            follower: mongoose.Schema.Types.ObjectId
         }
     ]
 })
