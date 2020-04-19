@@ -21,6 +21,10 @@ exports.follow = catchAsync(async(req, res, next) => {
                 $push: {
                     followers: {
                         follower: req.user._id
+                    },
+                    notifications: {
+                        senderId: req.user._id,
+                        message: `${req.user.username} is now following you.`
                     }
                 }
             })
@@ -54,6 +58,10 @@ exports.getUserByName = catchAsync(async(req, res, next) => {
 })
 
 exports.getUser = catchAsync(async(req, res, next) => {
-    let users = await User.findOne({_id: req.params.id}).populate('following.userFollowed').populate('followers.follower')
-    res.status(200).json(users)
+   let user = await User.findById(req.params.id).populate('following.userFollowed').populate('followers.follower')
+        res.status(200).json(user)
 })
+
+exports.getNotify = catchAsync(async(req, res, next) => {
+   
+ })
