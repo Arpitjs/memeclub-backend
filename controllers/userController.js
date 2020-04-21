@@ -9,14 +9,14 @@ exports.getAllUsers = catchAsync(async(req, res, next) => {
 
 exports.follow = catchAsync(async(req, res, next) => {
     User.findByIdAndUpdate({_id: req.user._id,
-    "following.userFollowed": { $ne: req.body._id }}, {
+    "following.userFollowed": { $ne: req.body.userId }}, {
         $push: {
             following: {
-                userFollowed: req.body._id
+                userFollowed: req.body.userId
             }
         }
     }).then(async () => {
-        await User.findByIdAndUpdate({_id: req.body._id, 
+        await User.findByIdAndUpdate({_id: req.body.userId, 
             "followers.follower": { $ne: req.user._id } }, {
                 $push: {
                     followers: {
@@ -29,66 +29,18 @@ exports.follow = catchAsync(async(req, res, next) => {
                 }
             })
             res.status(200).json({ msg: 'you have followed the user'})
-    })
-})
-
-
-exports.followFollowingUser = catchAsync(async(req, res, next) => {
-    console.log(req.body)
-    User.findByIdAndUpdate({_id: req.user._id,
-    "following.userFollowed": { $ne: req.body.follower._id }}, {
-        $push: {
-            following: {
-                userFollowed: req.body.follower._id
-            }
-        }
-    }).then(async () => {
-        await User.findByIdAndUpdate({_id: req.body.follower._id, 
-            "followers.follower": { $ne: req.user._id } }, {
-                $push: {
-                    followers: {
-                        follower: req.user._id
-                    },
-                    notifications: {
-                        senderId: req.user._id,
-                        message: `${req.user.username} is now following you.`
-                    }
-                }
-            })
-            res.status(200).json({ msg: 'you have followed the user'})
-    })
-})
-
-exports.UnfollowFollowingUser = catchAsync(async(req, res, next) => {
-    console.log(req.body)
-    User.findByIdAndUpdate({_id: req.user._id}, {
-        $pull: {
-            following: {
-                userFollowed: req.body.follower._id
-            }
-        }
-    }).then(async () => {
-        await User.findByIdAndUpdate({_id: req.body.follower._id }, {
-                $pull: {
-                    followers: {
-                        follower: req.user._id
-                    }
-                }
-            })
-            res.status(200).json({ msg: 'you have unfollowed the user'})
     })
 })
 
 exports.Unfollow = catchAsync(async(req, res, next) => {
-    console.log(req.body)
     User.findByIdAndUpdate({_id: req.user._id}, {
         $pull: {
             following: {
-                userFollowed: req.body.userFollowed._id
+                userFollowed: req.body.userId
             }
         }
     }).then(async () => {
-        await User.findByIdAndUpdate({_id: req.body.userFollowed._id }, {
+        await User.findByIdAndUpdate({_id: req.body.userId }, {
                 $pull: {
                     followers: {
                         follower: req.user._id
@@ -97,11 +49,6 @@ exports.Unfollow = catchAsync(async(req, res, next) => {
             })
             res.status(200).json({ msg: 'you have unfollowed the user'})
     })
-})
-
-exports.getUserByName = catchAsync(async(req, res, next) => {
-    let users = await User.findOne({username: req.params.username})
-    res.status(200).json(users)
 })
 
 exports.getUser = catchAsync(async(req, res, next) => {
@@ -109,6 +56,28 @@ exports.getUser = catchAsync(async(req, res, next) => {
         res.status(200).json(user)
 })
 
-exports.getNotify = catchAsync(async(req, res, next) => {
-   
+exports.markNotification = catchAsync(async(req, res, next) => {
+    if(!req.body.deleteVal) {
+        await User.updateOne({ _id: req.user._id, "notifications._id": req.params.id }, {
+            $set: {
+                'notifications.$.read': true
+            }
+        })
+        res.status(200).json({ msg: 'message marked as read.' })
+    } else {
+    await User.update({ _id: req.user._id, "notifications._id": req.params.id }, {
+        $pull: {
+            notifications: { _id: req.params.id }
+        }
+    })
+    res.status(200).json({ msg: 'notification deleted' })
+}
+ })
+
+ exports.markAllNotifications =  catchAsync(async(req, res, next) => {
+   await User.update({ _id: req.user._id }, {
+       $set: {
+           'notifications.$[elem].read': true
+       }
+   })
  })

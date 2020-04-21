@@ -5,11 +5,9 @@ let authController = require('../controllers/authController')
 
 router.get('/get-users', authController.protect, userController.getAllUsers)
 router.get('/get-user/:id', authController.protect, userController.getUser)
-router.get('/get-user/:username', authController.protect, userController.getUserByName)
 router.post('/follow', authController.protect, userController.follow)
-router.post('/followFollowing', authController.protect, userController.followFollowingUser)
-router.post('/UnfollowFollowing', authController.protect, userController.UnfollowFollowingUser)
 router.post('/Unfollow', authController.protect, userController.Unfollow)
-router.get('/notifications', authController.protect, userController.getNotify)
+router.post('/mark/:id', authController.protect, userController.markNotification)
+router.post('/mark-all', authController.protect, userController.markAllNotifications)
 
 module.exports = router
