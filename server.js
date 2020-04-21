@@ -5,6 +5,7 @@ let cookieParser = require('cookie-parser')
 let io = require('socket.io')
 let cors = require('cors')
 require('dotenv').config({path: './config.env'})
+
 let authRoutes = require('./routes/authRoutes')
 let postRoutes = require('./routes/postRoutes')
 let userRoutes = require('./routes/userRoutes')

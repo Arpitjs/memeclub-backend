@@ -35,7 +35,12 @@ exports.getPosts = async (req, res) => {
     let all = await Post.find()
         .populate('user')
         .sort({ created: -1 })
-    res.status(200).json(all)
+
+    let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
+        .populate('user')
+        .sort({ created: -1 })
+
+    res.status(200).json({all, topPosts})
 }
 
 exports.addLike = catchAsync(async (req, res, next) => {
@@ -47,12 +52,21 @@ exports.addLike = catchAsync(async (req, res, next) => {
             }
         },
         $inc: { totalLikes: 1 }
+    }).then(async () => {
+        await User.updateOne({ _id: req.body.user._id, 'posts.postId': postId }, {
+            $push: {
+                notifications: {
+                    senderId: req.user._id,
+                    message: `${req.user.username} liked your post.`
+                }
+            }
+        })
     })
     res.status(200).json({ message: 'the post is liked' })
 })
 
 exports.addComment = catchAsync(async (req, res, next) => {
-    console.log(req.body)
+    let currentPost = await Post.findById(req.params.postId)
     await Post.updateOne({ _id: req.params.postId }, {
         $push: {
             comments: {
@@ -61,6 +75,16 @@ exports.addComment = catchAsync(async (req, res, next) => {
                 comment: req.body.comment
             }
         }
+    }).then(async () => {
+        await User.updateOne({ _id: currentPost.user, 'posts.postId': req.params.postId }, {
+            $push: {
+                notifications: {
+                    senderId: req.user._id,
+                    message: `${req.user.username} commented on your post.`
+                }
+            }
+        })
+
     })
     res.status(200).json({ message: 'comment added.' })
 })
