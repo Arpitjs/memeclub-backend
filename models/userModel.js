@@ -62,7 +62,7 @@ let userSchema = mongoose.Schema({
     ],
     chatList: [
         {
-            userId: {
+            recieverId: {
                 type: mongoose.Schema.Types.ObjectId
             },
             messageId: {
