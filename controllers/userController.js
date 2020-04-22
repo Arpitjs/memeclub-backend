@@ -60,6 +60,11 @@ exports.getUser = catchAsync(async (req, res, next) => {
     res.status(200).json(user)
 })
 
+exports.getUserByName = catchAsync(async (req, res, next) => {
+    let user = await User.findOne({username: req.params.username}).populate('following.userFollowed').populate('followers.follower')
+    res.status(200).json(user)
+})
+
 exports.markNotification = catchAsync(async (req, res, next) => {
     if (!req.body.deleteVal) {
         await User.updateOne({ _id: req.user._id, "notifications._id": req.params.id }, {

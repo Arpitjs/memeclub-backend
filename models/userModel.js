@@ -59,6 +59,16 @@ let userSchema = mongoose.Schema({
                 type: String, default: ''
             }
         }
+    ],
+    chatList: [
+        {
+            userId: {
+                type: mongoose.Schema.Types.ObjectId
+            },
+            messageId: {
+                type: mongoose.Schema.Types.ObjectId
+            }
+        }
     ]
 })
 
