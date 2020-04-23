@@ -44,6 +44,7 @@ let port = process.env.PORT
 let server = require('http').createServer(app)
 io = io.listen(server)
 require('./socket/streams')(io) 
+require('./socket/chat')(io)
 server.listen(port, () => console.log('server listening @ '+ port))
 
 
