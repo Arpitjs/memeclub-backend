@@ -66,7 +66,8 @@ let userSchema = mongoose.Schema({
                 type: mongoose.Schema.Types.ObjectId
             },
             messageId: {
-                type: mongoose.Schema.Types.ObjectId
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Message'
             }
         }
     ]

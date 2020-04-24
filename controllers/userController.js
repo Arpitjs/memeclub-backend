@@ -56,12 +56,20 @@ exports.Unfollow = catchAsync(async (req, res, next) => {
 })
 
 exports.getUser = catchAsync(async (req, res, next) => {
-    let user = await User.findById(req.params.id).populate('following.userFollowed').populate('followers.follower')
+    let user = await User.findById(req.params.id)
+    .populate('following.userFollowed')
+    .populate('followers.follower')
+    .populate('chatList.recieverId')
+    .populate('chatList.messageId')
     res.status(200).json(user)
 })
 
 exports.getUserByName = catchAsync(async (req, res, next) => {
-    let user = await User.findOne({username: req.params.username}).populate('following.userFollowed').populate('followers.follower')
+    let user = await User.findOne({username: req.params.username})
+    .populate('following.userFollowed')
+    .populate('followers.follower')
+    .populate('chatList.recieverId')
+    .populate('chatList. messageId')
     res.status(200).json(user)
 })
 

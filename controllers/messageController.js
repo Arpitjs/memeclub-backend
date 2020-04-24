@@ -4,7 +4,6 @@ let Conversation = require('../models/conversationModel')
 let User = require('../models/userModel')
 
 exports.sendMessage = catchAsync(async (req, res, next) => {
-    console.log(req.body)
     let { reciever_Id } = req.params
     Conversation.find({
         $or: [
