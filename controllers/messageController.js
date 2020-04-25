@@ -2,6 +2,7 @@ let catchAsync = require('../utils/catchAsync')
 let Message = require('../models/messageModel')
 let Conversation = require('../models/conversationModel')
 let User = require('../models/userModel')
+let updateChatList = require('../utils/chat')
 
 exports.sendMessage = catchAsync(async (req, res, next) => {
     let { reciever_Id } = req.params
@@ -14,6 +15,9 @@ exports.sendMessage = catchAsync(async (req, res, next) => {
     })
     .then(async result => {
         if(result.length) {
+            let message = await Message.findOne({ conversationId:result[0]._id })
+            console.log(message)
+           await updateChatList(req, message)
             await Message.updateOne({ conversationId: result[0]._id }, {
                 $push: {
                     message: {
