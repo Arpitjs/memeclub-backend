@@ -1,5 +1,6 @@
 let User = require('../models/userModel')
 module.exports = async function(req, newMessage) {
+    
     await User.findByIdAndUpdate(req.user._id, {
         $pull: {
            chatList: {

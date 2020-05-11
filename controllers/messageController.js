@@ -8,15 +8,14 @@ exports.sendMessage = catchAsync(async (req, res, next) => {
     let { reciever_Id } = req.params
     Conversation.find({
         $or: [
-            { participants: { $elemMatch: {senderId: req.user._id, recieverId: reciever_Id }} },
+            { participants: { $elemMatch: { senderId: req.user._id, recieverId: reciever_Id } } },
             
-            { participants: { $elemMatch: {senderId: reciever_Id, recieverId: req.user._id }} }
+            { participants: { $elemMatch: { senderId: reciever_Id, recieverId: req.user._id } } }
         ]
     })
     .then(async result => {
         if(result.length) {
-            let message = await Message.findOne({ conversationId:result[0]._id })
-            console.log(message)
+            let message = await Message.findOne({ conversationId: result[0]._id })
            await updateChatList(req, message)
             await Message.updateOne({ conversationId: result[0]._id }, {
                 $push: {
@@ -103,5 +102,69 @@ exports.getMessages = catchAsync(async(req, res, next) => {
     if(conversation) {
         let message = await Message.findOne({ conversationId: conversation._id })
         res.status(200).json(message)
+    }
+})
+
+exports.markRecieverMsg = catchAsync(async(req, res, next) => {
+    let { reciever } = req.params
+    let msg = await Message.aggregate([
+        {
+            $unwind: '$message'
+        },
+        {
+            $match: {
+                $and: [
+                    {
+                        'message.senderName': reciever,
+                        'message.recieverName': req.user.username
+                    }
+                ]
+            }
+        }
+    ])
+    if(msg.length) {
+            msg.forEach(async m => {
+                await Message.updateOne({
+                    'message._id': m.message._id
+                },
+                {
+                $set: {
+                    'message.$.isRead': true
+                }
+            })
+            })
+            res.status(200).json({ msg: 'marked true.' })
+    }
+})
+
+
+exports.markAllMsgs = catchAsync(async(req, res, next) => {
+    let msg = await Message.aggregate([
+      {
+          $match: {
+              'message.recieverName': req.user.username
+          }
+      },
+      {
+          $unwind: '$message' 
+      },
+      {
+        $match: {
+            'message.recieverName': req.user.username
+        }
+      }
+    ])
+    if(msg.length) {
+            msg.forEach(async m => {
+                await Message.updateOne({
+                    'message._id': m.message._id
+                },
+                {
+                $set: {
+                    'message.$.isRead': true
+                }
+            })
+            })
+            res.status(200).json({ msg: 'all marked true.' })
     }
 })
