@@ -4,6 +4,7 @@ let User = require('../models/userModel')
 exports.getAllUsers = catchAsync(async (req, res, next) => {
     let users = await User.find({})
         .populate('posts.postId')
+        .populate('notifications.senderId')
     res.status(200).json(users)
 })
 
@@ -61,6 +62,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
     .populate('followers.follower')
     .populate('chatList.recieverId')
     .populate('chatList.messageId')
+    .populate('notifications.senderId')
     res.status(200).json(user)
 })
 
@@ -69,6 +71,7 @@ exports.getUserByName = catchAsync(async (req, res, next) => {
     .populate('following.userFollowed')
     .populate('followers.follower')
     .populate('chatList.recieverId')
+    .populate('notifications.senderId')
     .populate('chatList. messageId')
     res.status(200).json(user)
 })

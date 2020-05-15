@@ -10,6 +10,7 @@ let authRoutes = require('./routes/authRoutes')
 let postRoutes = require('./routes/postRoutes')
 let userRoutes = require('./routes/userRoutes')
 let messageRoutes = require('./routes/messageRoutes')
+let imageRoutes = require('./routes/imageRoutes')
 
 let app = express()
 app.use(cors())
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/messages', messageRoutes)
+app.use('/api/images', imageRoutes)
 
 app.use((err, req, res, next) => {
     console.log(err)

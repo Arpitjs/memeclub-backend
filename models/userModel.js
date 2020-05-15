@@ -70,6 +70,20 @@ let userSchema = mongoose.Schema({
                 ref: 'Message'
             }
         }
+    ],
+    picVersion: {
+        type: String,
+        default: '1589556877'
+    },
+    picId: {
+        type: String,
+        default: 'default_aoksum.jpg'
+    },
+    images: [ 
+        {
+            imgId: { type: String, default: '' },
+            imgVersion: { type: String, default: '' }
+        }
     ]
 })
 
