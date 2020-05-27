@@ -2,33 +2,73 @@ let Post = require('../models/postModel')
 let joi = require('@hapi/joi')
 let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
+let cloudinary = require('cloudinary')
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+})
 
 exports.createPost = catchAsync(async (req, res, next) => {
     let schema = joi.object().keys({
         post: joi.string().max(150).required()
     })
-    let { error } = schema.validate(req.body)
+    let body = {
+        post: req.body.post
+    }
+    let { error } = schema.validate(body)
     if (error && error.details) {
         return next({ msg: error.details[0].message })
     }
-    Post.create({
-        user: req.user,
+    let body2 = {
+        user: req.user._id,
         username: req.user.username,
         post: req.body.post
-    })
-        .then(async post => {
-            await User.update({ _id: req.user._id },
-                {
-                    $push:
+    }
+    if(req.body.post && !req.body.image) {
+        Post.create(body2)
+            .then(async post => {
+                await User.update({ _id: req.user._id },
                     {
-                        posts: {
-                            postId: post._id,
-                            post: req.body.post
+                        $push:
+                        {
+                            posts: {
+                                postId: post._id,
+                                post: req.body.post
+                            }
                         }
-                    }
-                })
-            res.status(200).json({ message: 'Post Created.', post })
+                    })
+                res.status(200).json({ message: 'Post Created.', post })
+            })   
+    } 
+    if(req.body.post && req.body.image) {
+        cloudinary.uploader.upload(req.body.image)
+        .then(response => {
+            let reqBody = {
+                user: req.user._id,
+                username: req.user.username,
+                post: req.body.post,
+                imgId: response.public_id,
+                imgVersion: response.version
+            }
+            Post.create(reqBody)
+            .then(async post => {
+                await User.update({ _id: req.user._id },
+                    {
+                        $push:
+                        {
+                            posts: {
+                                postId: post._id,
+                                post: req.body.post
+                            }
+                        }
+                    })
+        res.status(200).json({ message: 'Post Created with Image.', post })
+            })
         })
+        
+    }
 })
 
 exports.getPosts = async (req, res) => {

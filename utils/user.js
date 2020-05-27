@@ -15,7 +15,7 @@ class User {
     removeUser(id) {
         let user = this.getUser(id)
         if(user) {
-        this.globalRoom = this.globalRoom.filter(user => user.id  !== id)
+        this.globalRoom = this.globalRoom.filter(user => user.socketId !== id)
     }
     return user
 }

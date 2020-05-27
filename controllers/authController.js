@@ -18,7 +18,6 @@ function signToken(code, user, res) {
 }
 
 exports.register = async (req, res, next) => {
-    console.log(req.body)
     try {
         let schema = Joi.object().keys({
             username: Joi.string().min(5).required(),

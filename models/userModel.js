@@ -56,7 +56,7 @@ let userSchema = mongoose.Schema({
                 default: false
             },
             date: {
-                type: String, default: ''
+                type: Date, default: '',
             }
         }
     ],
@@ -94,6 +94,10 @@ userSchema.pre('save', async function (next) {
 
 userSchema.statics.verifyPassword = async function (p1, p2) {
     return await bcrypt.compare(p1, p2)
+}
+
+userSchema.statics.encrypt = async function(password) {
+    return await bcrypt.hash(password, 16)
 }
 
 let User = mongoose.model('User', userSchema)

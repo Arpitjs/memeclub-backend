@@ -10,5 +10,7 @@ router.post('/follow', authController.protect, userController.follow)
 router.post('/Unfollow', authController.protect, userController.Unfollow)
 router.post('/mark/:id', authController.protect, userController.markNotification)
 router.post('/mark-all', authController.protect, userController.markAllNotifications)
+router.post('/view-profile', authController.protect, userController.viewProfile)
+router.post('/change-password', authController.protect, userController.changePassword)
 
 module.exports = router 
