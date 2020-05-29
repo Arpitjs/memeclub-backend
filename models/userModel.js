@@ -84,7 +84,8 @@ let userSchema = mongoose.Schema({
             imgId: { type: String, default: '' },
             imgVersion: { type: String, default: '' }
         }
-    ]
+    ],
+    country: { type: String, default: ''}
 })
 
 userSchema.pre('save', async function (next) {

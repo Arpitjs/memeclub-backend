@@ -3,6 +3,8 @@ let joi = require('@hapi/joi')
 let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
 let cloudinary = require('cloudinary')
+let moment = require('moment')
+let request = require('request')
 
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -72,7 +74,9 @@ exports.createPost = catchAsync(async (req, res, next) => {
 })
 
 exports.getPosts = async (req, res) => {
-    let all = await Post.find()
+    let today = moment().startOf('day')
+    let tomorrow = moment(today).add(1, 'days')
+    let all = await Post.find({ created: { $gte: today.toDate(), $lt: tomorrow.toDate() } } )
         .populate('user')
         .sort({ created: -1 })
 
@@ -80,7 +84,18 @@ exports.getPosts = async (req, res) => {
         .populate('user')
         .sort({ created: -1 })
 
-    res.status(200).json({all, topPosts})
+        let user = await User.findOne({ _id: req.user._id })
+        if(user.country === '' || user.country === null ) {
+            request('https://geolocation-db.com/json', { json: true }, async (err, response) => {
+                if(err) console.log(err)
+                console.log(response)
+                await User.updateOne({ _id: req.user._id}, {
+                    country: response.body.country_name
+                })
+            })
+          
+        }
+    res.status(200).json({all, topPosts })
 }
 
 exports.addLike = catchAsync(async (req, res, next) => {
