@@ -76,7 +76,8 @@ exports.createPost = catchAsync(async (req, res, next) => {
 exports.getPosts = async (req, res) => {
     let today = moment().startOf('day')
     let tomorrow = moment(today).add(1, 'days')
-    let all = await Post.find({ created: { $gte: today.toDate(), $lt: tomorrow.toDate() } } )
+    let all = await Post.find()
+    //  { created: { $gte: today.toDate(), $lt: tomorrow.toDate() } }
         .populate('user')
         .sort({ created: -1 })
 
@@ -150,3 +151,38 @@ exports.getOnePost = catchAsync(async (req, res, next) => {
     res.status(200).json(post)
 })
 
+exports.editPost = catchAsync(async(req, res, next) => {
+    let body = {
+        post: req.body.post,
+        created: new Date()
+    }
+   Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
+   .then(post => res.status(200).json(post))
+})
+
+exports.editPostUser = catchAsync(async(req, res, next) => {
+    console.log(req.body)
+    res.status(200).json({msg: 'fuck'})
+//    User.findOneAndUpdate({ _id: req.body.id }, {
+//        $set: {
+//            posts: {
+//                post: req.body.post
+//            }
+//        }
+//    })
+//    .then(post => res.status(200).json(post))
+})
+
+exports.deletePost = catchAsync(async(req, res, next) => {
+    let { id } = req.params
+    let result = await Post.findByIdAndDelete(id)
+    if(!result) return res.status(404).json({msg: 'couldnt delete post.'})
+    await User.updateOne({ _id: req.user._id }, {
+        $pull: {
+            posts: {
+                postId: result._id
+            }
+        }
+    })
+    return res.status(200).json({msg: 'post deleted.'})
+})
