@@ -12,8 +12,6 @@ exports.uploadImage = catchAsync(async (req, res, next) => {
             resource_type: "image", chunk_size: 6000000
     })
 
-    
-
     .then(async res => {
         await User.updateOne({
             _id: req.user._id
@@ -36,3 +34,4 @@ exports.changePFP = catchAsync(async (req, res, next) => {
     })
     res.status(200).json({ msg: 'set as pfp.' })
 })
+

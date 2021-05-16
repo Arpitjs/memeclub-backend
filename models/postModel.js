@@ -45,7 +45,7 @@ let postSchema = new mongoose.Schema({
     },
     created: {
         type: Date,
-        default: new Date()
+        default: Date.now
     },
     imgVersion: { type: String, default: ''},
     imgId: { type: String, default: ''}

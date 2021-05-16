@@ -45,6 +45,8 @@ exports.createPost = catchAsync(async (req, res, next) => {
             })   
     } 
     if(req.body.post && req.body.image) {
+        let iType = Object.values(req.body.image[5])[0]
+        if(iType !== 'i') return next({ msg: 'file is not of appropriate type'})
         cloudinary.uploader.upload(req.body.image)
         .then(response => {
             let reqBody = {
@@ -69,21 +71,20 @@ exports.createPost = catchAsync(async (req, res, next) => {
         res.status(200).json({ message: 'Post Created with Image.', post })
             })
         })
-        
     }
 })
 
 exports.getPosts = async (req, res) => {
-    let today = moment().startOf('day')
-    let tomorrow = moment(today).add(1, 'days')
-    let all = await Post.find()
+    // let today = moment().startOf('day')
+    // let tomorrow = moment(today).add(1, 'days')
     //  { created: { $gte: today.toDate(), $lt: tomorrow.toDate() } }
+    let all = await Post.find()
         .populate('user')
         .sort({ created: -1 })
 
     let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
         .populate('user')
-        .sort({ created: -1 })
+        .sort({ createdAt: -1 })
 
         let user = await User.findOne({ _id: req.user._id })
         if(user.country === '' || user.country === null ) {
