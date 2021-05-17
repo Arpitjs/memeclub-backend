@@ -5,6 +5,7 @@ let User = require('../models/userModel')
 let cloudinary = require('cloudinary')
 let moment = require('moment')
 let request = require('request')
+const { populate } = require('../models/postModel')
 
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -28,7 +29,7 @@ exports.createPost = catchAsync(async (req, res, next) => {
         username: req.user.username,
         post: req.body.post
     }
-    if(req.body.post && !req.body.image) {
+    if (req.body.post && !req.body.image) {
         Post.create(body2)
             .then(async post => {
                 await User.update({ _id: req.user._id },
@@ -42,62 +43,95 @@ exports.createPost = catchAsync(async (req, res, next) => {
                         }
                     })
                 res.status(200).json({ message: 'Post Created.', post })
-            })   
-    } 
-    if(req.body.post && req.body.image) {
-        let iType = Object.values(req.body.image[5])[0]
-        if(iType !== 'i') return next({ msg: 'file is not of appropriate type'})
-        cloudinary.uploader.upload(req.body.image)
-        .then(response => {
-            let reqBody = {
-                user: req.user._id,
-                username: req.user.username,
-                post: req.body.post,
-                imgId: response.public_id,
-                imgVersion: response.version
-            }
-            Post.create(reqBody)
-            .then(async post => {
-                await User.update({ _id: req.user._id },
-                    {
-                        $push:
-                        {
-                            posts: {
-                                postId: post._id,
-                                post: req.body.post
-                            }
-                        }
-                    })
-        res.status(200).json({ message: 'Post Created with Image.', post })
             })
-        })
+    }
+    if (req.body.post && req.body.image) {
+        let iType = Object.values(req.body.image[5])[0]
+        if (iType !== 'i') return next({ msg: 'file is not of appropriate type' })
+        cloudinary.uploader.upload(req.body.image)
+            .then(response => {
+                let reqBody = {
+                    user: req.user._id,
+                    username: req.user.username,
+                    post: req.body.post,
+                    imgId: response.public_id,
+                    imgVersion: response.version
+                }
+                Post.create(reqBody)
+                    .then(async post => {
+                        await User.update({ _id: req.user._id },
+                            {
+                                $push:
+                                {
+                                    posts: {
+                                        postId: post._id,
+                                        post: req.body.post
+                                    }
+                                }
+                            })
+                        res.status(200).json({ message: 'Post Created with Image.', post })
+                    })
+            })
     }
 })
 
 exports.getPosts = async (req, res) => {
-    // let today = moment().startOf('day')
-    // let tomorrow = moment(today).add(1, 'days')
-    //  { created: { $gte: today.toDate(), $lt: tomorrow.toDate() } }
+
     let all = await Post.find()
         .populate('user')
         .sort({ created: -1 })
 
+    // let topPosts = []
+    // Post.aggregate(
+    //     [
+    //         { $sort: {created: 1, comments: -1 } }
+    //     ]
+    // ).then(response => {
+    //     response.forEach(r => {
+    //         if (r.likes.length >= 2) {
+    //             topPosts.push(r)
+    //         }
+    //     })
+    // })
+
     let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
         .populate('user')
         .sort({ createdAt: -1 })
-
-        let user = await User.findOne({ _id: req.user._id })
-        if(user.country === '' || user.country === null ) {
-            request('https://geolocation-db.com/json', { json: true }, async (err, response) => {
-                if(err) console.log(err)
-                console.log(response)
-                await User.updateOne({ _id: req.user._id}, {
-                    country: response.body.country_name
-                })
-            })
-          
+        arr = []
+    topPosts.forEach(post => {
+        points = {}
+        yday = new Date() - 1000 * 60 * 60 * 24 
+        today = new Date(yday)
+        console.log(today)
+       post.comments.length ? points.comment = 5 : points.comment = 0
+       post.likes.length ? points.likes = post.likes.length : ''
+       post.created.getTime() > today.getTime() ? points.date = 1 : points.date = -4
+       let final = {}
+       final.post = post
+       final.score = points.comment + points.likes + points.date
+       arr.push(final)
+    })
+    arr.sort((a,b) => {
+        if(a.score > b.score){
+            return -1
+        } else if(b.score > a.score) {
+            return 1
+        } else {
+            return 0
         }
-    res.status(200).json({all, topPosts })
+    })
+    console.log('arey sort', arr)
+    let user = await User.findOne({ _id: req.user._id })
+    if (user.country === '' || user.country === null) {
+        request('https://geolocation-db.com/json', { json: true }, async (err, response) => {
+            if (err) console.log(err)
+            console.log(response)
+            await User.updateOne({ _id: req.user._id }, {
+                country: response.body.country_name
+            })
+        })
+    }
+    res.status(200).json({ all, arr })
 }
 
 exports.addLike = catchAsync(async (req, res, next) => {
@@ -152,32 +186,32 @@ exports.getOnePost = catchAsync(async (req, res, next) => {
     res.status(200).json(post)
 })
 
-exports.editPost = catchAsync(async(req, res, next) => {
+exports.editPost = catchAsync(async (req, res, next) => {
     let body = {
         post: req.body.post,
         created: new Date()
     }
-   Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
-   .then(post => res.status(200).json(post))
+    Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
+        .then(post => res.status(200).json(post))
 })
 
-exports.editPostUser = catchAsync(async(req, res, next) => {
+exports.editPostUser = catchAsync(async (req, res, next) => {
     console.log(req.body)
-    res.status(200).json({msg: 'fuck'})
-//    User.findOneAndUpdate({ _id: req.body.id }, {
-//        $set: {
-//            posts: {
-//                post: req.body.post
-//            }
-//        }
-//    })
-//    .then(post => res.status(200).json(post))
+    res.status(200).json({ msg: 'fuck' })
+    //    User.findOneAndUpdate({ _id: req.body.id }, {
+    //        $set: {
+    //            posts: {
+    //                post: req.body.post
+    //            }
+    //        }
+    //    })
+    //    .then(post => res.status(200).json(post))
 })
 
-exports.deletePost = catchAsync(async(req, res, next) => {
+exports.deletePost = catchAsync(async (req, res, next) => {
     let { id } = req.params
     let result = await Post.findByIdAndDelete(id)
-    if(!result) return res.status(404).json({msg: 'couldnt delete post.'})
+    if (!result) return res.status(404).json({ msg: 'couldnt delete post.' })
     await User.updateOne({ _id: req.user._id }, {
         $pull: {
             posts: {
@@ -185,5 +219,5 @@ exports.deletePost = catchAsync(async(req, res, next) => {
             }
         }
     })
-    return res.status(200).json({msg: 'post deleted.'})
+    return res.status(200).json({ msg: 'post deleted.' })
 })

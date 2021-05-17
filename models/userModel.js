@@ -23,7 +23,7 @@ let userSchema = mongoose.Schema({
             },
             createdAt: {
                 type: Date,
-                default: new Date()
+                default: Date.now
             }
         }
     ],
@@ -49,7 +49,7 @@ let userSchema = mongoose.Schema({
             },
             created: {
                 type: Date,
-                default: Date.now()
+                default: Date.now
             },
             read: {
                 type: Boolean,
