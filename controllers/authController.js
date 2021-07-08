@@ -6,8 +6,8 @@ let User = require('../models/userModel')
 exports.login = async (req, res, next) => {
     let user = await User.findOne({ username: req.body.username })
     if (!user) return next({ msg: 'invalid username or password.' })
-    let isUser = await User.verifyPassword(req.body.password, user.password)
-    if (!isUser) return next({ msg: 'invalid username or password.', status: statusCodes.NOT_FOUND })
+    // let isUser = await User.verifyPassword(req.body.password, user.password)
+    // if (!isUser) return next({ msg: 'invalid username or password.', status: statusCodes.NOT_FOUND })
     signToken(statusCodes.OK, user, res)
 }
 

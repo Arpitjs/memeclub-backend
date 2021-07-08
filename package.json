@@ -22,7 +22,9 @@
     "moment": "^2.26.0",
     "mongoose": "^5.9.7",
     "morgan": "^1.10.0",
+    "node-fetch": "^2.6.1",
     "request": "^2.88.2",
+    "sharp": "^0.28.2",
     "socket.io": "^2.3.0"
   }
 }

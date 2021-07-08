@@ -3,7 +3,7 @@ let joi = require('@hapi/joi')
 let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
 let cloudinary = require('cloudinary')
-let moment = require('moment')
+// let moment = require('moment')
 let request = require('request')
 const { populate } = require('../models/postModel')
 
@@ -48,7 +48,7 @@ exports.createPost = catchAsync(async (req, res, next) => {
     if (req.body.post && req.body.image) {
         let iType = Object.values(req.body.image[5])[0]
         if (iType !== 'i') return next({ msg: 'file is not of appropriate type' })
-        cloudinary.uploader.upload(req.body.image)
+        cloudinary.v2.uploader.upload(req.body.image)
             .then(response => {
                 let reqBody = {
                     user: req.user._id,
@@ -59,7 +59,7 @@ exports.createPost = catchAsync(async (req, res, next) => {
                 }
                 Post.create(reqBody)
                     .then(async post => {
-                        await User.update({ _id: req.user._id },
+                        await User.updateOne({ _id: req.user._id },
                             {
                                 $push:
                                 {
@@ -79,33 +79,22 @@ exports.getPosts = async (req, res) => {
 
     let all = await Post.find()
         .populate('user')
-        .sort({ created: -1 })
-
-    // let topPosts = []
-    // Post.aggregate(
-    //     [
-    //         { $sort: {created: 1, comments: -1 } }
-    //     ]
-    // ).then(response => {
-    //     response.forEach(r => {
-    //         if (r.likes.length >= 2) {
-    //             topPosts.push(r)
-    //         }
-    //     })
-    // })
-
+        .sort( {created: -1 })
     let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
         .populate('user')
-        .sort({ createdAt: -1 })
         arr = []
     topPosts.forEach(post => {
         points = {}
-        yday = new Date() - 1000 * 60 * 60 * 24 
-        today = new Date(yday)
-        console.log(today)
-       post.comments.length ? points.comment = 5 : points.comment = 0
+        function Ago(){
+            let today = new Date()
+            // let weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate()-7) 1 week
+            let monthAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate()-30)
+            return monthAgo
+        }
+        // console.log('dates',weekAgo())
+       post.comments.length ? points.comment = 3 * post.comments.length : points.comment = 0
        post.likes.length ? points.likes = post.likes.length : ''
-       post.created.getTime() > today.getTime() ? points.date = 1 : points.date = -4
+       post.created.getTime() > Ago().getTime() ? points.date = 1 : points.date = -4
        let final = {}
        final.post = post
        final.score = points.comment + points.likes + points.date
@@ -187,12 +176,42 @@ exports.getOnePost = catchAsync(async (req, res, next) => {
 })
 
 exports.editPost = catchAsync(async (req, res, next) => {
-    let body = {
-        post: req.body.post,
-        created: new Date()
-    }
-    Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
-        .then(post => res.status(200).json(post))
+    // console.log(req.body)
+        let body = {
+            post: req.body.post,
+            created: new Date()
+        }
+        Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
+            .then(post => res.status(200).json(post))
+    
+        if (req.body.post && req.body.image) {
+            let iType = Object.values(req.body.image[5])[0]
+            if (iType !== 'i') return next({ msg: 'file is not of appropriate type' })
+            cloudinary.uploader.upload(req.body.image)
+                .then(response => {
+                    let reqBody = {
+                        user: req.user._id,
+                        username: req.user.username,
+                        post: req.body.post,
+                        imgId: response.public_id,
+                        imgVersion: response.version
+                    }
+                    Post.update(reqBody)
+                        .then(async post => {
+                            await User.update({ _id: req.user._id },
+                                {
+                                    $push:
+                                    {
+                                        posts: {
+                                            postId: post._id,
+                                            post: req.body.post
+                                        }
+                                    }
+                                })
+                            res.status(200).json({ message: 'Post Updated with Image.', post })
+                        })
+                })
+        }
 })
 
 exports.editPostUser = catchAsync(async (req, res, next) => {
@@ -215,7 +234,7 @@ exports.deletePost = catchAsync(async (req, res, next) => {
     await User.updateOne({ _id: req.user._id }, {
         $pull: {
             posts: {
-                postId: result._id
+                postId: id
             }
         }
     })
