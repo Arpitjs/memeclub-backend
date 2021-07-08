@@ -4,6 +4,7 @@ let statusCodes = require('http-status-codes')
 let User = require('../models/userModel')
 
 exports.login = async (req, res, next) => {
+    console.log(req.body)
     let user = await User.findOne({ username: req.body.username })
     if (!user) return next({ msg: 'invalid username or password.' })
     // let isUser = await User.verifyPassword(req.body.password, user.password)

@@ -79,31 +79,45 @@ exports.getPosts = async (req, res) => {
 
     let all = await Post.find()
         .populate('user')
-        .sort( {created: -1 })
+        .sort({ created: -1 })
     let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
         .populate('user')
-        arr = []
+    arr = []
     topPosts.forEach(post => {
         points = {}
-        function Ago(){
+        post.comments.length ? points.comment = 3 * post.comments.length : points.comment = 0
+        post.likes.length ? points.likes = post.likes.length : ''
+
+        //    post.created.getTime() > Ago().getTime() ? points.date = 1 : points.date = -4
+
+        function calcPointsForDates(createdTime) {
             let today = new Date()
-            // let weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate()-7) 1 week
-            let monthAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate()-30)
-            return monthAgo
+            let weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7)
+            let monthAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30)
+            let ThreeMonthsAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 90)
+
+            if (createdTime > weekAgo && monthAgo && ThreeMonthsAgo) {
+                points.date = 1
+            } else if (createdTime < ThreeMonthsAgo.getTime()) {
+                points.date = -5
+            } else if (createdTime < monthAgo.getTime()) {
+                points.date = -4
+            } else if (createdTime < weekAgo.getTime()) {
+                points.date = -2
+            }
         }
-        // console.log('dates',weekAgo())
-       post.comments.length ? points.comment = 3 * post.comments.length : points.comment = 0
-       post.likes.length ? points.likes = post.likes.length : ''
-       post.created.getTime() > Ago().getTime() ? points.date = 1 : points.date = -4
-       let final = {}
-       final.post = post
-       final.score = points.comment + points.likes + points.date
-       arr.push(final)
+        calcPointsForDates(post.created.getTime())
+
+        let final = {}
+        final.post = post
+        final.score = points.comment + points.likes + points.date
+        arr.push(final)
     })
-    arr.sort((a,b) => {
-        if(a.score > b.score){
+
+    arr.sort((a, b) => {
+        if (a.score > b.score) {
             return -1
-        } else if(b.score > a.score) {
+        } else if (b.score > a.score) {
             return 1
         } else {
             return 0
@@ -176,42 +190,31 @@ exports.getOnePost = catchAsync(async (req, res, next) => {
 })
 
 exports.editPost = catchAsync(async (req, res, next) => {
-    // console.log(req.body)
-        let body = {
-            post: req.body.post,
-            created: new Date()
-        }
-        Post.findOneAndUpdate({ _id: req.body.id }, body, { new: true })
-            .then(post => res.status(200).json(post))
-    
-        if (req.body.post && req.body.image) {
-            let iType = Object.values(req.body.image[5])[0]
-            if (iType !== 'i') return next({ msg: 'file is not of appropriate type' })
-            cloudinary.uploader.upload(req.body.image)
-                .then(response => {
-                    let reqBody = {
-                        user: req.user._id,
-                        username: req.user.username,
-                        post: req.body.post,
-                        imgId: response.public_id,
-                        imgVersion: response.version
-                    }
-                    Post.update(reqBody)
-                        .then(async post => {
-                            await User.update({ _id: req.user._id },
-                                {
-                                    $push:
-                                    {
-                                        posts: {
-                                            postId: post._id,
-                                            post: req.body.post
-                                        }
-                                    }
-                                })
-                            res.status(200).json({ message: 'Post Updated with Image.', post })
-                        })
-                })
-        }
+    let body = {
+        post: req.body.post,
+        created: new Date()
+    }
+    if (req.body.post && !req.body.image) {
+        await Post.findOneAndUpdate({ _id: req.body.PostId }, body, { new: true })
+        res.status(200).json({ message: 'Post Updated.', post })
+    }
+
+    if (req.body.post && req.body.image) {
+        let iType = Object.values(req.body.image[5])[0]
+        if (iType !== 'i') return next({ msg: 'file is not of appropriate type' })
+        cloudinary.uploader.upload(req.body.image)
+            .then(async response => {
+                let reqBody = {
+                    user: req.user._id,
+                    username: req.user.username,
+                    post: req.body.post,
+                    imgId: response.public_id,
+                    imgVersion: response.version
+                }
+                let post = await Post.findByIdAndUpdate(req.body.PostId, reqBody, { new: true })
+                res.status(200).json({ message: 'Post Updated with Image.', post })
+            })
+    }
 })
 
 exports.editPostUser = catchAsync(async (req, res, next) => {
