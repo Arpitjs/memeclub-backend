@@ -3,8 +3,6 @@ let joi = require('@hapi/joi')
 let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
 let cloudinary = require('cloudinary')
-// let moment = require('moment')
-let request = require('request')
 const { populate } = require('../models/postModel')
 
 cloudinary.config({

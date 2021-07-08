@@ -1,6 +1,5 @@
 let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
-let moment = require('moment')
 let JOI = require('@hapi/joi')
 let bcrypt = require('bcryptjs')
 
