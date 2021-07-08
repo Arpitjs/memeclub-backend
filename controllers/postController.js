@@ -91,19 +91,27 @@ exports.getPosts = async (req, res) => {
         //    post.created.getTime() > Ago().getTime() ? points.date = 1 : points.date = -4
 
         function calcPointsForDates(createdTime) {
-            let today = new Date()
-            let weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7)
-            let monthAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30)
-            let ThreeMonthsAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 90)
 
-            if (createdTime > weekAgo && monthAgo && ThreeMonthsAgo) {
-                points.date = 1
-            } else if (createdTime < ThreeMonthsAgo.getTime()) {
+            let today = new Date()
+            let Y = today.getFullYear()
+            let M = today.getMonth()
+            let T = today.getDate()
+
+            let weekAgo = () => new Date(Y, M,  T- 7).getTime()
+            let monthAgo = days => new Date(Y, M, T-days).getTime()
+
+            if (createdTime > weekAgo() && monthAgo(30) && monthAgo(90)) {
+                points.date = 2
+            } else if(createdTime < monthAgo(180)) {
                 points.date = -5
-            } else if (createdTime < monthAgo.getTime()) {
+            } else if (createdTime < monthAgo(90)) {
                 points.date = -4
-            } else if (createdTime < weekAgo.getTime()) {
+            } else if (createdTime < monthAgo(60)) {
+                points.date = -3
+            } else if (createdTime < monthAgo(30)) {
                 points.date = -2
+            } else if (createdTime < weekAgo()) {
+                points.date = -1
             }
         }
         calcPointsForDates(post.created.getTime())
