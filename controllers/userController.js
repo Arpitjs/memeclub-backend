@@ -2,6 +2,7 @@ let catchAsync = require('../utils/catchAsync')
 let User = require('../models/userModel')
 let JOI = require('@hapi/joi')
 let bcrypt = require('bcryptjs')
+let moment = require('moment')
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
     let users = await User.find({})
@@ -118,7 +119,7 @@ exports.viewProfile = catchAsync(async (req, res, next) => {
         $push: {
             notifications: {
                 senderId: req.user._id,
-                message: `${req.user.username} viewed your profile`,
+                message: `${req.user.username} viewed your profile.`,
                 created: new Date(),
                 date: date,
                 viewProfile: true

@@ -74,10 +74,20 @@ exports.createPost = catchAsync(async (req, res, next) => {
 })
 
 exports.getPosts = async (req, res) => {
-
-    let all = await Post.find()
+    let pageSize = +req.query.pagesize
+    let currentPage = +req.query.page
+    let postsQuery = Post.find()
+    if (pageSize && currentPage) {
+        postsQuery
+            .skip(pageSize * (currentPage - 1))
+            .limit(pageSize)
+    }
+    let all = await postsQuery
         .populate('user')
         .sort({ created: -1 })
+
+    let totalPosts = await Post.countDocuments()
+
     let topPosts = await Post.find({ totalLikes: { $gte: 2 } })
         .populate('user')
     arr = []
@@ -95,12 +105,12 @@ exports.getPosts = async (req, res) => {
             let M = today.getMonth()
             let T = today.getDate()
 
-            let weekAgo = () => new Date(Y, M,  T- 7).getTime()
-            let monthAgo = days => new Date(Y, M, T-days).getTime()
+            let weekAgo = () => new Date(Y, M, T - 7).getTime()
+            let monthAgo = days => new Date(Y, M, T - days).getTime()
 
             if (createdTime > weekAgo() && monthAgo(30) && monthAgo(90)) {
                 points.date = 2
-            } else if(createdTime < monthAgo(180)) {
+            } else if (createdTime < monthAgo(180)) {
                 points.date = -5
             } else if (createdTime < monthAgo(90)) {
                 points.date = -4
@@ -129,18 +139,17 @@ exports.getPosts = async (req, res) => {
             return 0
         }
     })
-    console.log('arey sort', arr)
+    // console.log('arey sort', arr)
     let user = await User.findOne({ _id: req.user._id })
     if (user.country === '' || user.country === null) {
         request('https://geolocation-db.com/json', { json: true }, async (err, response) => {
             if (err) console.log(err)
-            console.log(response)
             await User.updateOne({ _id: req.user._id }, {
                 country: response.body.country_name
             })
         })
     }
-    res.status(200).json({ all, arr })
+    res.status(200).json({ all, arr, totalPosts })
 }
 
 exports.addLike = catchAsync(async (req, res, next) => {

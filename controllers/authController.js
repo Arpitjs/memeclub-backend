@@ -4,17 +4,16 @@ let statusCodes = require('http-status-codes')
 let User = require('../models/userModel')
 
 exports.login = async (req, res, next) => {
-    console.log(req.body)
     let user = await User.findOne({ username: req.body.username })
     if (!user) return next({ msg: 'invalid username or password.' })
-    // let isUser = await User.verifyPassword(req.body.password, user.password)
-    // if (!isUser) return next({ msg: 'invalid username or password.', status: statusCodes.NOT_FOUND })
+    let isUser = await User.verifyPassword(req.body.password, user.password)
+    if (!isUser) return next({ msg: 'invalid username or password.', status: statusCodes.NOT_FOUND })
     signToken(statusCodes.OK, user, res)
 }
 
 function signToken(code, user, res) {
     let token = jwt.sign({ user }, process.env.JWT_SECRET)
-    res.cookie('auth', token)
+    // res.cookie('auth', token)
     res.status(code).json({ user, token })
 }
 

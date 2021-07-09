@@ -1,7 +1,7 @@
 let catchAsync = require('../utils/catchAsync')
 let cloudinary = require('cloudinary')
 let User = require('../models/userModel')
-const fetch = require("node-fetch")
+
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUD_API_KEY,
