@@ -108,7 +108,7 @@ exports.getPosts = async (req, res) => {
             let weekAgo = () => new Date(Y, M, T - 7).getTime()
             let monthAgo = days => new Date(Y, M, T - days).getTime()
 
-            if (createdTime > weekAgo() && monthAgo(30) && monthAgo(90)) {
+            if (createdTime > weekAgo()) {
                 points.date = 2
             } else if (createdTime < monthAgo(180)) {
                 points.date = -5
@@ -139,7 +139,7 @@ exports.getPosts = async (req, res) => {
             return 0
         }
     })
-    // console.log('arey sort', arr)
+    console.log('arey sort', arr)
     let user = await User.findOne({ _id: req.user._id })
     if (user.country === '' || user.country === null) {
         request('https://geolocation-db.com/json', { json: true }, async (err, response) => {
@@ -206,12 +206,12 @@ exports.getOnePost = catchAsync(async (req, res, next) => {
 
 exports.editPost = catchAsync(async (req, res, next) => {
     let body = {
-        post: req.body.post,
-        created: new Date()
+        post: req.body.post
+        // created: new Date()
     }
     if (req.body.post && !req.body.image) {
         await Post.findOneAndUpdate({ _id: req.body.PostId }, body, { new: true })
-        res.status(200).json({ message: 'Post Updated.', post })
+        res.status(200).json({ message: 'Post Updated.', body })
     }
 
     if (req.body.post && req.body.image) {
